@@ -6,7 +6,46 @@ const App: React.FC = () => {
   const [passcodes, setPasscodes] = useState<string[]>([]);
   const [cardQuantity, setCardQuantity] = useState<{[key: string]: number}>({})
   const [queryParam, setQueryParam] = useState<string>('');
-  const [data, setData] = useState();
+  const [data, setData] = useState<Card[]>([]);
+
+  interface CardSet {
+    set_name: string;
+    set_code: string;
+    set_rarity: string;
+    set_rarity_code: string;
+    set_price: string;
+  }
+
+  interface CardImage {
+    id: number; 
+    image_url: string; 
+    image_url_small: string; 
+    image_url_cropped: string
+  }
+
+  interface CardPrice {
+    cardmarket_price: string, 
+    tcgplayer_price: string, 
+    ebay_price: string; 
+    amazon_price: string; 
+    coolstuffinc_price: string
+  }
+
+  interface Card {
+    archetype: string;
+    banlist_info: {ban_tcg: string, ban_ocg: string};
+    card_images: CardImage[]
+    card_prices: CardPrice[]
+    card_sets: CardSet[];
+    desc: string;
+    frameType: string;
+    humanReadableCardType: string;
+    id: number;
+    name: string;
+    race: string;
+    type: string;
+    ygoprodeck_url: string;
+  } 
 
   useEffect(() => {
     const newCards = { ...cardQuantity }
@@ -31,11 +70,18 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
-    axios.get(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${queryParam}`)
-    .then(response => {
-      console.log('Data:', response.data);
-    })
-  })
+    if (queryParam) {
+      try {
+        axios.get(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${queryParam}`)
+        .then((response) => {
+          setData(response.data.data);
+        })
+      }
+      catch (e) {
+        console.error(e)
+      }
+    }
+  }, [queryParam])
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; 
@@ -46,7 +92,8 @@ const App: React.FC = () => {
       reader.onload = function (e) {
         const fileContent = e.target?.result as string;
         const passcodes = processYDK(fileContent);
-        setPasscodes(passcodes); 
+        setPasscodes(passcodes);       
+        setCardQuantity({})
       };
 
       reader.onerror = function () {
@@ -64,15 +111,14 @@ const App: React.FC = () => {
     const lines = content.split('\n');
     return lines.filter(line => line.trim() !== '' && (!line.startsWith('#')) && (!line.startsWith('!')));
   };
-
   return (
     <div>
-      <input type="file" onChange={handleFileUpload} />
+      <input type="file" onChange={handleFileUpload} accept='ydk'/>
       <div>
         <h3>Passcodes:</h3>
         <ul>
-          {passcodes.map((passcode, index) => (
-            <li key={index}>{passcode}</li>
+          {data.map((card) => (
+            <div key={card.id}>{card.name}</div>
           ))}
         </ul>
       </div>
