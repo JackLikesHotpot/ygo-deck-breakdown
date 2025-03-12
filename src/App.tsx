@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Card from './components/Card/Card'
 
 const App: React.FC = () => {
 
   const [passcodes, setPasscodes] = useState<string[]>([]);
   const [cardQuantity, setCardQuantity] = useState<{[key: string]: number}>({})
+  const [cardList, setCardList] = useState<{[key: string]: number}>({})
   const [queryParam, setQueryParam] = useState<string>('');
   const [data, setData] = useState<Card[]>([]);
 
@@ -51,7 +53,7 @@ const App: React.FC = () => {
     const newCards = { ...cardQuantity }
 
     for (let i = 0; i < passcodes.length; i++) {
-      const passcode = passcodes[i]
+      const passcode = passcodes[i].trim();
       if (newCards[passcode]) {
         newCards[passcode] += 1
       }
@@ -82,6 +84,16 @@ const App: React.FC = () => {
       }
     }
   }, [queryParam])
+
+  useEffect(() => {
+    const newCardList = { ...cardQuantity }
+
+    for (let card of data) {
+      newCardList[card.name] = cardQuantity[card.id]
+      delete newCardList[card.id]
+    }
+    setCardList(newCardList)
+  }, [data])
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]; 
@@ -118,7 +130,12 @@ const App: React.FC = () => {
         <h3>Passcodes:</h3>
         <ul>
           {data.map((card) => (
-            <div key={card.id}>{card.name}</div>
+            <Card
+              name={card.name}
+              key={card.id}
+              desc={card.desc}
+              quantity={cardList[card.name]}
+            />
           ))}
         </ul>
       </div>
